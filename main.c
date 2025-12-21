@@ -2,6 +2,7 @@
  * nodewatcher-agent - remote monitoring daemon
  *
  * Copyright (C) 2014 Jernej Kos <jernej@kos.mx>
+ * Copyright (C) 2024 Valent Turkovic <valent@otvorenamreza.org>
  *
  * This program is free software: you can redistribute it and/or modify it
  * under the terms of the GNU Affero General Public License as published by the

@@ -2,6 +2,7 @@
  * nodewatcher-agent - remote monitoring daemon
  *
  * Copyright (C) 2015 Jernej Kos <jernej@kos.mx>
+ * Copyright (C) 2024 Valent Turkovic <valent@otvorenamreza.org>
  *
  * This program is free software: you can redistribute it and/or modify it
  * under the terms of the GNU Affero General Public License as published by the
@@ -103,6 +104,16 @@ static void nw_wireless_add_encryption(json_object *object,
       if (entry->auth_suites & IWINFO_KMGMT_8021x)
         json_object_array_add(authentication, json_object_new_string("802.1x"));
 
+#ifdef IWINFO_KMGMT_SAE
+      if (entry->auth_suites & IWINFO_KMGMT_SAE)
+        json_object_array_add(authentication, json_object_new_string("sae"));
+#endif
+
+#ifdef IWINFO_KMGMT_OWE
+      if (entry->auth_suites & IWINFO_KMGMT_OWE)
+        json_object_array_add(authentication, json_object_new_string("owe"));
+#endif
+
       if (!entry->auth_suites  || entry->auth_suites & IWINFO_KMGMT_NONE)
         json_object_array_add(authentication, json_object_new_string("none"));
 
@@ -133,6 +144,11 @@ static void nw_wireless_add_encryption(json_object *object,
 
     if (ciph & IWINFO_CIPHER_CKIP)
       json_object_array_add(ciphers, json_object_new_string("ckip"));
+
+#ifdef IWINFO_CIPHER_GCMP
+    if (ciph & IWINFO_CIPHER_GCMP)
+      json_object_array_add(ciphers, json_object_new_string("gcmp"));
+#endif
 
     if (!ciph || ciph & IWINFO_CIPHER_NONE)
       json_object_array_add(ciphers, json_object_new_string("none"));
@@ -182,6 +198,18 @@ static bool nw_wireless_process_interface(const char *ifname,
       json_object_array_add(protocols, json_object_new_string("g"));
     if (modes & IWINFO_80211_N)
       json_object_array_add(protocols, json_object_new_string("n"));
+#ifdef IWINFO_80211_AC
+    if (modes & IWINFO_80211_AC)
+      json_object_array_add(protocols, json_object_new_string("ac"));
+#endif
+#ifdef IWINFO_80211_AX
+    if (modes & IWINFO_80211_AX)
+      json_object_array_add(protocols, json_object_new_string("ax"));
+#endif
+#ifdef IWINFO_80211_BE
+    if (modes & IWINFO_80211_BE)
+      json_object_array_add(protocols, json_object_new_string("be"));
+#endif
     json_object_object_add(interface, "protocols", protocols);
   }
 

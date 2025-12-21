@@ -1,7 +1,11 @@
-cmake_minimum_required(VERSION 2.6)
+cmake_minimum_required(VERSION 3.5)
 
 project(nodewatcher-agent C)
-add_definitions(-Os -Wall -Werror --std=gnu99 -Wmissing-declarations)
+
+# Modern CMake approach for compile options
+set(CMAKE_C_STANDARD 99)
+set(CMAKE_C_STANDARD_REQUIRED ON)
+add_compile_options(-Os -Wall -Werror -Wmissing-declarations)
 
 option(GENERAL_MODULE "General module support" ON)
 option(RESOURCES_MODULE "Resources module support" ON)

@@ -5,6 +5,17 @@ Nodewatcher agent is a monitoring agent that runs on OpenWrt-supported devices a
 can provide various telemetry information to the nodewatcher_ monitor daemon via
 HTTP.
 
+This fork is maintained by the Open Mesh Network (Otvorena Mreža) community and
+is updated for compatibility with OpenWrt 24.10 and later versions.
+
+**New in this fork:**
+
+* Updated for OpenWrt 24.10 compatibility
+* Added WiFi 5 (802.11ac), WiFi 6 (802.11ax), and WiFi 7 (802.11be) protocol detection
+* Added WPA3-SAE and OWE authentication support
+* Added GCMP cipher support
+* Modern CMake build system (requires CMake 3.5+)
+
 .. _nodewatcher: http://nodewatcher.net/
 
 Configuration
@@ -129,16 +140,18 @@ implemented:
 Development setup
 -----------------
 
-To build the master version of nodewatcher agent package a buildroot needs to be set up. It can either be built from OpenWrt source or a precompiled OpenWrt SDK can be used.
-This example uses 18.06.1 version of OpenWrt, ipq40xx target and its SDK. For latest version `OpenWrt download page`_ should be checked.::
+To build the nodewatcher agent package, a buildroot needs to be set up. It can either be built from OpenWrt source or a precompiled OpenWrt SDK can be used.
+This example uses OpenWrt 24.10.0 for the ath79 target. For the latest version, check the `OpenWrt download page`_.
 
-  curl -O https://downloads.openwrt.org/releases/18.06.1/targets/ipq40xx/generic/openwrt-sdk-18.06.1-ipq40xx_gcc-7.3.0_musl_eabi.Linux-x86_64.tar.xz
-  tar xvf openwrt-sdk-18.06.1-ipq40xx_gcc-7.3.0_musl_eabi.Linux-x86_64.tar.xz
-  cd openwrt-sdk-18.06.1-ipq40xx_gcc-7.3.0_musl_eabi.Linux-x86_64
+Download and extract the SDK::
 
-Now you can either manually add Makefile localy or add a remote repository.
-In this example a remote repository is used.::
-  echo "src-git wlansi https://github.com/wlanslovenija/firmware-packages-opkg.git" >> feeds.conf.default
+  curl -O https://downloads.openwrt.org/releases/24.10.0/targets/ath79/generic/openwrt-sdk-24.10.0-ath79-generic_gcc-13.3.0_musl.Linux-x86_64.tar.zst
+  tar --zstd -xvf openwrt-sdk-24.10.0-ath79-generic_gcc-13.3.0_musl.Linux-x86_64.tar.zst
+  cd openwrt-sdk-24.10.0-ath79-generic_gcc-13.3.0_musl.Linux-x86_64
+
+Add the nodewatcher feed and install packages::
+
+  echo "src-git nodewatcher https://github.com/valentt/firmware-packages-opkg.git" >> feeds.conf.default
   ./scripts/feeds update -a
   ./scripts/feeds install nodewatcher-agent
 
