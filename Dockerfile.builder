@@ -50,7 +50,7 @@ RUN echo 'src-git base https://github.com/openwrt/openwrt.git;openwrt-24.10' > f
 
 # Update and install feeds
 RUN ./scripts/feeds update -a && \
-    ./scripts/feeds install libubox libubus libuci libjson-c libiwinfo
+    ./scripts/feeds install libubox libubus libuci libjson-c libiwinfo curl
 
 # Configure to build base packages as modules
 RUN cat >> .config << 'EOF'
@@ -61,6 +61,8 @@ CONFIG_PACKAGE_libuci=m
 CONFIG_PACKAGE_libjson-c=m
 CONFIG_PACKAGE_libblobmsg-json=m
 CONFIG_PACKAGE_libiwinfo=m
+CONFIG_PACKAGE_libcurl=m
+CONFIG_LIBCURL_OPENSSL=y
 EOF
 
 RUN make defconfig
@@ -95,10 +97,9 @@ RUN STAGING=$(ls -d staging_dir/target-* | head -1) && \
          -O ${STAGING}/usr/include/iwinfo/utils.h && \
     echo "=== iwinfo headers installed ===" && ls -la ${STAGING}/usr/include/iwinfo*
 
-# Note: http_push module requires libcurl which has ABI compatibility issues with SDK.
-# Pre-built libcurl from OpenWrt packages doesn't link correctly with SDK toolchain.
-# Would need to compile libcurl from source using feeds system (complex setup).
-# Keeping http_push disabled for now - use the HTTP push via external script instead.
+# Compile libcurl from packages feed (for http_push module)
+# Note: curl package is in packages feed, not base feed
+RUN make package/feeds/packages/curl/compile V=s -j$(nproc) || make package/feeds/packages/curl/compile V=s -j1
 
 # Verify staging_dir has what we need
 RUN echo "=== Staging dir libs ===" && \

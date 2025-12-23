@@ -78,6 +78,7 @@ jobs:
             - `nodewatcher-agent-mod-routing_babel` - Babel routing info
             - `nodewatcher-agent-mod-routing_olsr` - OLSR routing info
             - `nodewatcher-agent-mod-meshpoint` - Mesh point sensors
+            - `nodewatcher-agent-mod-http_push` - HTTP push to nodewatcher server
 
             ### Installation
             ```bash

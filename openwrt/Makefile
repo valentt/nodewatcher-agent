@@ -11,8 +11,8 @@ PKG_BUILD_PARALLEL:=1
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
 
-# Disable http_push module (needs libcurl - ABI compatibility issues with SDK)
-CMAKE_OPTIONS += -DHTTP_PUSH_MODULE=OFF
+# Enable http_push module with libcurl (compiled from feeds)
+CMAKE_OPTIONS += -DHTTP_PUSH_MODULE=ON
 
 define Package/nodewatcher-agent/default
   SECTION:=utils
@@ -67,3 +67,4 @@ $(eval $(call BuildModule,clients,))
 $(eval $(call BuildModule,routing_babel,))
 $(eval $(call BuildModule,routing_olsr,))
 $(eval $(call BuildModule,meshpoint,))
+$(eval $(call BuildModule,http_push,+libcurl))

@@ -43,12 +43,12 @@ We use **GitHub Issues** for tracking features because:
 - [x] GitHub Actions CI for building .ipk packages
 - [x] Docker-based build system
 - [x] Build documentation (docs/BUILD.md)
-- [ ] **GitHub Releases with .ipk artifacts**
+- [x] **GitHub Releases with .ipk artifacts**
   - Auto-create release on tag push
   - Attach all .ipk packages
   - Generate changelog
 - [ ] **Multi-architecture builds**
-  - [ ] ath79/generic (current)
+  - [x] ath79/generic (current)
   - [ ] ramips/mt7621
   - [ ] x86/64
   - [ ] mediatek/filogic
@@ -59,14 +59,15 @@ We use **GitHub Issues** for tracking features because:
 ### Phase 2: Enable All Modules (Priority: HIGH)
 
 - [x] Core modules working (general, resources, interfaces, etc.)
-- [ ] **Enable wireless module**
-  - [ ] Add libiwinfo to Dockerfile dependencies
+- [x] **Enable wireless module**
+  - [x] Add libiwinfo to Dockerfile dependencies (pre-built package + headers)
   - [ ] Test wireless scanning functionality
   - [ ] Document wireless module usage
-- [ ] **Enable http_push module**
-  - [ ] Add libcurl to Dockerfile dependencies
+- [ ] **Enable http_push module** (blocked: ABI compatibility issue with libcurl)
+  - [x] Add libcurl to Dockerfile dependencies
+  - [ ] Fix ABI compatibility with SDK toolchain
   - [ ] Test HTTP push to nodewatcher server
-  - [ ] Configure push interval and endpoints
+  - Alternative: Use external HTTP push script with curl command
 
 ### Phase 3: Better User Experience (Priority: MEDIUM)
 
@@ -203,13 +204,13 @@ We use [Semantic Versioning](https://semver.org/):
 
 | Phase | Status | Progress |
 |-------|--------|----------|
-| Phase 1: Deployment | In Progress | 60% |
-| Phase 2: All Modules | Not Started | 0% |
+| Phase 1: Deployment | Complete | 90% |
+| Phase 2: All Modules | In Progress | 50% |
 | Phase 3: User Experience | Not Started | 0% |
-| Phase 4: Documentation | In Progress | 30% |
+| Phase 4: Documentation | In Progress | 40% |
 | Phase 5: Quality | Not Started | 0% |
 
-**Next Priority:** GitHub Releases with auto-attached .ipk packages
+**Next Priority:** Fix http_push module (libcurl ABI issue)
 
 ---
 
