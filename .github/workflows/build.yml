@@ -47,14 +47,67 @@ jobs:
           # Install nodewatcher-agent with dependencies
           ./scripts/feeds install -a -p nodewatcher || true
 
-      - name: Build dependencies
+      - name: Download and install dependencies
         run: |
           cd sdk
-          # Build required dependencies first
-          make package/libs/libubox/compile V=s || true
-          make package/system/ubus/compile V=s || true
-          make package/system/uci/compile V=s || true
-          make package/libs/libjson-c/compile V=s || true
+          STAGING_DIR="staging_dir/target-mips_24kc_musl"
+          PKG_BASE="https://downloads.openwrt.org/releases/${OPENWRT_VERSION}/packages/mips_24kc/base"
+          TARGET_BASE="https://downloads.openwrt.org/releases/${OPENWRT_VERSION}/targets/${TARGET}/${SUBTARGET}/packages"
+
+          # Create directories
+          mkdir -p tmp_pkgs
+          mkdir -p "${STAGING_DIR}/usr/lib" "${STAGING_DIR}/usr/include"
+
+          # Download required packages
+          echo "Downloading dependency packages..."
+          wget -q "${PKG_BASE}/libubox_2024-09-16-9e52171d-1_mips_24kc.ipk" -O tmp_pkgs/libubox.ipk || true
+          wget -q "${PKG_BASE}/libubus_2024-09-01-9913aa61-1_mips_24kc.ipk" -O tmp_pkgs/libubus.ipk || true
+          wget -q "${PKG_BASE}/libuci_2024-10-10-c8d13d65-1_mips_24kc.ipk" -O tmp_pkgs/libuci.ipk || true
+          wget -q "${PKG_BASE}/libjson-c5_0.18-1_mips_24kc.ipk" -O tmp_pkgs/libjson-c.ipk || true
+          wget -q "${PKG_BASE}/libblobmsg-json_2024-09-16-9e52171d-1_mips_24kc.ipk" -O tmp_pkgs/libblobmsg-json.ipk || true
+          wget -q "${TARGET_BASE}/libiwinfo_2024-10-20-c45bf3fc-1_mips_24kc.ipk" -O tmp_pkgs/libiwinfo.ipk || true
+          wget -q "${PKG_BASE}/libcurl4_8.10.1-1_mips_24kc.ipk" -O tmp_pkgs/libcurl.ipk || true
+
+          # Extract and install packages
+          for pkg in tmp_pkgs/*.ipk; do
+            if [ -f "$pkg" ]; then
+              echo "Extracting $pkg..."
+              mkdir -p tmp_extract
+              cd tmp_extract
+              ar x "../$pkg" 2>/dev/null || true
+              tar xzf data.tar.gz 2>/dev/null || tar xJf data.tar.xz 2>/dev/null || true
+              # Copy libraries
+              cp -rf usr/lib/* "../${STAGING_DIR}/usr/lib/" 2>/dev/null || true
+              cp -rf lib/* "../${STAGING_DIR}/lib/" 2>/dev/null || true
+              cd ..
+              rm -rf tmp_extract
+            fi
+          done
+
+          # Download and install header packages (development files)
+          echo "Downloading header packages..."
+          wget -q "${PKG_BASE}/libubox-dev_2024-09-16-9e52171d-1_mips_24kc.ipk" -O tmp_pkgs/libubox-dev.ipk || true
+          wget -q "${PKG_BASE}/libubus-dev_2024-09-01-9913aa61-1_mips_24kc.ipk" -O tmp_pkgs/libubus-dev.ipk || true
+          wget -q "${PKG_BASE}/libuci-dev_2024-10-10-c8d13d65-1_mips_24kc.ipk" -O tmp_pkgs/libuci-dev.ipk || true
+
+          for pkg in tmp_pkgs/*-dev.ipk; do
+            if [ -f "$pkg" ]; then
+              echo "Extracting $pkg..."
+              mkdir -p tmp_extract
+              cd tmp_extract
+              ar x "../$pkg" 2>/dev/null || true
+              tar xzf data.tar.gz 2>/dev/null || tar xJf data.tar.xz 2>/dev/null || true
+              cp -rf usr/include/* "../${STAGING_DIR}/usr/include/" 2>/dev/null || true
+              cd ..
+              rm -rf tmp_extract
+            fi
+          done
+
+          # List what we have
+          echo "Libraries installed:"
+          ls -la "${STAGING_DIR}/usr/lib/" || true
+          echo "Headers installed:"
+          ls -la "${STAGING_DIR}/usr/include/" || true
 
       - name: Configure SDK
         run: |
