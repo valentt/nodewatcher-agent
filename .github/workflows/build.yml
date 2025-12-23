@@ -133,11 +133,11 @@ jobs:
           mkdir -p feeds/nodewatcher/util/nodewatcher-agent/src
           cp -r ../nodewatcher-agent/* feeds/nodewatcher/util/nodewatcher-agent/src/
 
-          # Add feed to config
-          echo "src-link nodewatcher $(pwd)/feeds/nodewatcher" >> feeds.conf.default
+          # Add feed to config (as first line to have priority)
+          sed -i '1i src-link nodewatcher '"$(pwd)/feeds/nodewatcher"'' feeds.conf.default
 
-          # Update and install feed
-          ./scripts/feeds update -a
+          # Only update and install nodewatcher feed (skip base feeds to avoid 503 errors from git.openwrt.org)
+          ./scripts/feeds update nodewatcher
           ./scripts/feeds install -a -p nodewatcher
 
       - name: Download and install dependencies
