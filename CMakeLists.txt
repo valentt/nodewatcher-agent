@@ -28,14 +28,38 @@ if(JSONC_FOUND)
   include_directories(${JSONC_INCLUDE_DIRS})
 endif()
 
-find_path(ubus_include_dir libubus.h)
-include_directories(${ubus_include_dir})
+# Find ubus headers - check staging_dir for cross-compilation
+find_path(ubus_include_dir libubus.h
+  HINTS
+    ${CMAKE_FIND_ROOT_PATH}/usr/include
+    ${STAGING_DIR}/usr/include
+    /usr/include
+)
+if(ubus_include_dir)
+  include_directories(${ubus_include_dir})
+endif()
 
-find_path(ubox_include_dir libubox/blobmsg_json.h)
-include_directories(${ubox_include_dir})
+# Find ubox headers
+find_path(ubox_include_dir libubox/blobmsg_json.h
+  HINTS
+    ${CMAKE_FIND_ROOT_PATH}/usr/include
+    ${STAGING_DIR}/usr/include
+    /usr/include
+)
+if(ubox_include_dir)
+  include_directories(${ubox_include_dir})
+endif()
 
-find_path(uci_include_dir uci.h)
-include_directories(${uci_include_dir})
+# Find uci headers
+find_path(uci_include_dir uci.h
+  HINTS
+    ${CMAKE_FIND_ROOT_PATH}/usr/include
+    ${STAGING_DIR}/usr/include
+    /usr/include
+)
+if(uci_include_dir)
+  include_directories(${uci_include_dir})
+endif()
 
 find_library(json_library NAMES json-c json)
 find_library(ubus_library NAMES ubus)
