@@ -37,14 +37,18 @@ jobs:
           tar --zstd -xf sdk.tar.zst
           mv openwrt-sdk-* sdk
 
-      - name: Setup feeds with local source
+      - name: Setup package from local source
         run: |
           cd sdk
-          # Create custom feed pointing to local source
-          mkdir -p feeds/nodewatcher/util/nodewatcher-agent
 
-          # Create Makefile for the package
-          cat > feeds/nodewatcher/util/nodewatcher-agent/Makefile << 'MAKEFILE_EOF'
+          # Create package directory structure
+          mkdir -p package/nodewatcher-agent/src
+
+          # Copy local source
+          cp -r ../nodewatcher-agent/* package/nodewatcher-agent/src/
+
+          # Create OpenWrt package Makefile
+          cat > package/nodewatcher-agent/Makefile << 'MAKEFILE_EOF'
           include $(TOPDIR)/rules.mk
 
           PKG_NAME:=nodewatcher-agent
@@ -120,114 +124,19 @@ jobs:
           $(eval $(call BuildPackage,nodewatcher-agent))
           $(eval $(call BuildModule,general,,Provides general system info.))
           $(eval $(call BuildModule,resources,,Provides system resource usage info.))
-          $(eval $(call BuildModule,interfaces,netifd,Provides network interface info.))
-          $(eval $(call BuildModule,wireless,libiwinfo,Provides wireless interface info.))
+          $(eval $(call BuildModule,interfaces,+netifd,Provides network interface info.))
+          $(eval $(call BuildModule,wireless,+libiwinfo,Provides wireless interface info.))
           $(eval $(call BuildModule,keys_ssh,,Provides SSH key info.))
           $(eval $(call BuildModule,clients,,Provides client info.))
-          $(eval $(call BuildModule,http_push,libcurl,Provides HTTP push support.))
+          $(eval $(call BuildModule,http_push,+libcurl,Provides HTTP push support.))
           $(eval $(call BuildModule,routing_babel,,Provides Babel routing info.))
           $(eval $(call BuildModule,routing_olsr,,Provides OLSR routing info.))
           MAKEFILE_EOF
 
-          # Copy local source to the package
-          mkdir -p feeds/nodewatcher/util/nodewatcher-agent/src
-          cp -r ../nodewatcher-agent/* feeds/nodewatcher/util/nodewatcher-agent/src/
-
-          # Add feed to config (as first line to have priority)
-          sed -i '1i src-link nodewatcher '"$(pwd)/feeds/nodewatcher"'' feeds.conf.default
-
-          # Only update and install nodewatcher feed (skip base feeds to avoid 503 errors from git.openwrt.org)
-          ./scripts/feeds update nodewatcher
-          ./scripts/feeds install -a -p nodewatcher
-
-      - name: Download and install dependencies
-        run: |
-          cd sdk
-          STAGING_DIR="$(pwd)/staging_dir/target-mips_24kc_musl"
-          PKG_BASE="https://downloads.openwrt.org/releases/${OPENWRT_VERSION}/packages/mips_24kc/base"
-          TARGET_BASE="https://downloads.openwrt.org/releases/${OPENWRT_VERSION}/targets/${TARGET}/${SUBTARGET}/packages"
-
-          # Create directories
-          mkdir -p tmp_pkgs
-          mkdir -p "${STAGING_DIR}/lib"
-          mkdir -p "${STAGING_DIR}/usr/lib"
-          mkdir -p "${STAGING_DIR}/usr/include"
-
-          # Download required packages
-          echo "Downloading dependency packages..."
-          wget -q "${PKG_BASE}/libubox_2024-09-16-9e52171d-1_mips_24kc.ipk" -O tmp_pkgs/libubox.ipk || echo "Failed libubox"
-          wget -q "${PKG_BASE}/libubus_2024-09-01-9913aa61-1_mips_24kc.ipk" -O tmp_pkgs/libubus.ipk || echo "Failed libubus"
-          wget -q "${PKG_BASE}/libuci_2024-10-10-c8d13d65-1_mips_24kc.ipk" -O tmp_pkgs/libuci.ipk || echo "Failed libuci"
-          wget -q "${PKG_BASE}/libjson-c5_0.18-1_mips_24kc.ipk" -O tmp_pkgs/libjson-c.ipk || echo "Failed libjson-c"
-          wget -q "${PKG_BASE}/libblobmsg-json_2024-09-16-9e52171d-1_mips_24kc.ipk" -O tmp_pkgs/libblobmsg-json.ipk || echo "Failed libblobmsg-json"
-          wget -q "${TARGET_BASE}/libiwinfo_2024-10-20-c45bf3fc-1_mips_24kc.ipk" -O tmp_pkgs/libiwinfo.ipk || echo "Failed libiwinfo"
-          wget -q "${PKG_BASE}/libcurl4_8.10.1-1_mips_24kc.ipk" -O tmp_pkgs/libcurl.ipk || echo "Failed libcurl"
-          ls -la tmp_pkgs/
-
-          # Extract and install packages using absolute paths
-          echo "Extracting packages..."
-          for pkg in tmp_pkgs/*.ipk; do
-            if [ -f "$pkg" ]; then
-              echo "Processing $pkg..."
-              rm -rf tmp_extract
-              mkdir -p tmp_extract
-              (
-                cd tmp_extract
-                ar x "../$pkg"
-                # Try both compression formats
-                zstd -d data.tar.zst -o data.tar 2>/dev/null || \
-                gzip -d data.tar.gz 2>/dev/null || \
-                xz -d data.tar.xz 2>/dev/null || true
-                tar xf data.tar 2>/dev/null || true
-              )
-              # Copy libraries using absolute paths
-              if [ -d "tmp_extract/usr/lib" ]; then
-                cp -rf tmp_extract/usr/lib/* "${STAGING_DIR}/usr/lib/" 2>/dev/null || true
-              fi
-              if [ -d "tmp_extract/lib" ]; then
-                cp -rf tmp_extract/lib/* "${STAGING_DIR}/lib/" 2>/dev/null || true
-              fi
-              rm -rf tmp_extract
-            fi
-          done
-
-          # Download and install header packages
-          echo "Downloading header packages..."
-          wget -q "${PKG_BASE}/libubox-dev_2024-09-16-9e52171d-1_mips_24kc.ipk" -O tmp_pkgs/libubox-dev.ipk || echo "Failed libubox-dev"
-          wget -q "${PKG_BASE}/libubus-dev_2024-09-01-9913aa61-1_mips_24kc.ipk" -O tmp_pkgs/libubus-dev.ipk || echo "Failed libubus-dev"
-          wget -q "${PKG_BASE}/libuci-dev_2024-10-10-c8d13d65-1_mips_24kc.ipk" -O tmp_pkgs/libuci-dev.ipk || echo "Failed libuci-dev"
-
-          for pkg in tmp_pkgs/*-dev.ipk; do
-            if [ -f "$pkg" ]; then
-              echo "Processing $pkg..."
-              rm -rf tmp_extract
-              mkdir -p tmp_extract
-              (
-                cd tmp_extract
-                ar x "../$pkg"
-                zstd -d data.tar.zst -o data.tar 2>/dev/null || \
-                gzip -d data.tar.gz 2>/dev/null || \
-                xz -d data.tar.xz 2>/dev/null || true
-                tar xf data.tar 2>/dev/null || true
-              )
-              if [ -d "tmp_extract/usr/include" ]; then
-                cp -rf tmp_extract/usr/include/* "${STAGING_DIR}/usr/include/" 2>/dev/null || true
-              fi
-              rm -rf tmp_extract
-            fi
-          done
-
-          # List what we have
-          echo "=== Libraries in ${STAGING_DIR}/lib/ ==="
-          ls -la "${STAGING_DIR}/lib/" 2>/dev/null || echo "No files"
-          echo "=== Libraries in ${STAGING_DIR}/usr/lib/ ==="
-          ls -la "${STAGING_DIR}/usr/lib/" 2>/dev/null || echo "No files"
-          echo "=== Headers in ${STAGING_DIR}/usr/include/ ==="
-          ls -la "${STAGING_DIR}/usr/include/" 2>/dev/null || echo "No files"
-
       - name: Configure SDK
         run: |
           cd sdk
+          # Enable all nodewatcher packages
           cat >> .config << 'EOF'
           CONFIG_SIGNED_PACKAGES=n
           CONFIG_PACKAGE_nodewatcher-agent=m
@@ -246,13 +155,16 @@ jobs:
       - name: Build packages
         run: |
           cd sdk
-          make package/nodewatcher-agent/compile V=s -j$(nproc) || make package/nodewatcher-agent/compile V=s -j1
+          # First build dependencies
+          make package/nodewatcher-agent/compile V=s -j$(nproc) 2>&1 || \
+          make package/nodewatcher-agent/compile V=s -j1 2>&1
 
       - name: Collect packages
         run: |
           mkdir -p packages
-          find sdk/bin -name "nodewatcher*.ipk" -exec cp {} packages/ \;
-          ls -la packages/
+          find sdk/bin -name "nodewatcher*.ipk" -exec cp {} packages/ \; 2>/dev/null || true
+          echo "=== Built packages ==="
+          ls -la packages/ || echo "No packages found"
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
@@ -260,6 +172,7 @@ jobs:
           name: nodewatcher-agent-packages-${{ env.TARGET }}-${{ env.SUBTARGET }}
           path: packages/*.ipk
           retention-days: 30
+          if-no-files-found: warn
 
       - name: Create Release
         if: startsWith(github.ref, 'refs/tags/')
