@@ -74,12 +74,13 @@ RUN make package/feeds/base/libjson-c/compile V=s -j$(nproc) || make package/fee
 
 # Download pre-built libiwinfo packages and extract to staging_dir
 # libiwinfo requires kernel headers to compile, so we use pre-built packages instead
+# Note: OpenWrt 24.10 uses tar.gz format for .ipk (not ar format)
 RUN ARCH="mips_24kc" && \
     PKG_URL="https://downloads.openwrt.org/releases/${OPENWRT_VERSION}/packages/${ARCH}/base" && \
     mkdir -p /tmp/iwinfo && cd /tmp/iwinfo && \
     wget -q "${PKG_URL}/libiwinfo20230701_2024.10.20~b94f066e-r1_mips_24kc.ipk" -O libiwinfo.ipk && \
-    ar x libiwinfo.ipk && \
-    tar xzf data.tar.gz 2>/dev/null || tar xf data.tar.zst --use-compress-program=unzstd && \
+    tar xzf libiwinfo.ipk && \
+    tar xzf data.tar.gz && \
     STAGING=$(ls -d /home/builder/sdk/staging_dir/target-* | head -1) && \
     cp -av usr/lib/libiwinfo.so* ${STAGING}/usr/lib/ && \
     cd /home/builder/sdk && rm -rf /tmp/iwinfo
