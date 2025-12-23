@@ -61,11 +61,42 @@ if(uci_include_dir)
   include_directories(${uci_include_dir})
 endif()
 
-find_library(json_library NAMES json-c json)
-find_library(ubus_library NAMES ubus)
-find_library(ubox_library NAMES ubox)
-find_library(uci_library NAMES uci)
-find_library(blobmsg_json_library NAMES blobmsg_json)
+# Find libraries - check staging_dir for cross-compilation
+find_library(json_library NAMES json-c json
+  HINTS
+    ${CMAKE_FIND_ROOT_PATH}/lib
+    ${CMAKE_FIND_ROOT_PATH}/usr/lib
+    ${STAGING_DIR}/lib
+    ${STAGING_DIR}/usr/lib
+)
+find_library(ubus_library NAMES ubus
+  HINTS
+    ${CMAKE_FIND_ROOT_PATH}/lib
+    ${CMAKE_FIND_ROOT_PATH}/usr/lib
+    ${STAGING_DIR}/lib
+    ${STAGING_DIR}/usr/lib
+)
+find_library(ubox_library NAMES ubox
+  HINTS
+    ${CMAKE_FIND_ROOT_PATH}/lib
+    ${CMAKE_FIND_ROOT_PATH}/usr/lib
+    ${STAGING_DIR}/lib
+    ${STAGING_DIR}/usr/lib
+)
+find_library(uci_library NAMES uci
+  HINTS
+    ${CMAKE_FIND_ROOT_PATH}/lib
+    ${CMAKE_FIND_ROOT_PATH}/usr/lib
+    ${STAGING_DIR}/lib
+    ${STAGING_DIR}/usr/lib
+)
+find_library(blobmsg_json_library NAMES blobmsg_json
+  HINTS
+    ${CMAKE_FIND_ROOT_PATH}/lib
+    ${CMAKE_FIND_ROOT_PATH}/usr/lib
+    ${STAGING_DIR}/lib
+    ${STAGING_DIR}/usr/lib
+)
 
 set(SOURCES
   main.c
@@ -129,7 +160,14 @@ endif()
 if(WIRELESS_MODULE)
   set(MODULES ${MODULES} wireless_module)
   add_library(wireless_module MODULE modules/wireless.c)
-  target_link_libraries(wireless_module ${ubox_library} ${uci_library} iwinfo nodewatcher-agent-common)
+  find_library(iwinfo_library NAMES iwinfo
+    HINTS
+      ${CMAKE_FIND_ROOT_PATH}/lib
+      ${CMAKE_FIND_ROOT_PATH}/usr/lib
+      ${STAGING_DIR}/lib
+      ${STAGING_DIR}/usr/lib
+  )
+  target_link_libraries(wireless_module ${ubox_library} ${uci_library} ${iwinfo_library} nodewatcher-agent-common)
   set_target_properties(wireless_module PROPERTIES OUTPUT_NAME wireless PREFIX "")
 endif()
 
@@ -169,7 +207,13 @@ if(HTTP_PUSH_MODULE)
   if(curl_include_dir)
     include_directories(${curl_include_dir})
   endif()
-  find_library(curl_library NAMES curl)
+  find_library(curl_library NAMES curl
+    HINTS
+      ${CMAKE_FIND_ROOT_PATH}/lib
+      ${CMAKE_FIND_ROOT_PATH}/usr/lib
+      ${STAGING_DIR}/lib
+      ${STAGING_DIR}/usr/lib
+  )
 
   set(MODULES ${MODULES} http_push_module)
   add_library(http_push_module MODULE modules/http_push.c)
