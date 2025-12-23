@@ -50,7 +50,7 @@ static void nw_wireless_call_int(json_object *object,
                                  const char *ifname,
                                  const char *key,
                                  int (*func)(const char*, int*),
-                                 const char **map)
+                                 const char * const *map)
 {
   int rv;
 
