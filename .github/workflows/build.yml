@@ -1,0 +1,91 @@
+name: Build OpenWrt Packages
+
+on:
+  push:
+    branches: [master, main]
+    tags: ['v*']
+  pull_request:
+    branches: [master, main]
+  workflow_dispatch:
+
+env:
+  OPENWRT_VERSION: "24.10.0"
+  TARGET: "ath79"
+  SUBTARGET: "generic"
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout nodewatcher-agent
+        uses: actions/checkout@v4
+        with:
+          path: nodewatcher-agent
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential gawk gettext git libncurses5-dev \
+            libssl-dev python3 rsync unzip wget xz-utils zlib1g-dev zstd
+
+      - name: Download OpenWrt SDK
+        run: |
+          SDK_URL="https://downloads.openwrt.org/releases/${OPENWRT_VERSION}/targets/${TARGET}/${SUBTARGET}/openwrt-sdk-${OPENWRT_VERSION}-${TARGET}-${SUBTARGET}_gcc-13.3.0_musl.Linux-x86_64.tar.zst"
+          echo "Downloading SDK from: ${SDK_URL}"
+          wget -q "${SDK_URL}" -O sdk.tar.zst
+          tar --zstd -xf sdk.tar.zst
+          mv openwrt-sdk-* sdk
+
+      - name: Setup feeds
+        run: |
+          cd sdk
+          echo "src-git nodewatcher https://github.com/valentt/firmware-packages-opkg.git" >> feeds.conf.default
+          ./scripts/feeds update -a
+          ./scripts/feeds install -a
+
+      - name: Configure SDK
+        run: |
+          cd sdk
+          # Disable default package selections
+          cat >> .config << 'EOF'
+          CONFIG_SIGNED_PACKAGES=n
+          CONFIG_PACKAGE_nodewatcher-agent=m
+          CONFIG_PACKAGE_nodewatcher-agent-mod-general=m
+          CONFIG_PACKAGE_nodewatcher-agent-mod-resources=m
+          CONFIG_PACKAGE_nodewatcher-agent-mod-interfaces=m
+          CONFIG_PACKAGE_nodewatcher-agent-mod-wireless=m
+          CONFIG_PACKAGE_nodewatcher-agent-mod-keys_ssh=m
+          CONFIG_PACKAGE_nodewatcher-agent-mod-clients=m
+          CONFIG_PACKAGE_nodewatcher-agent-mod-http_push=m
+          CONFIG_PACKAGE_nodewatcher-agent-mod-routing_babel=m
+          CONFIG_PACKAGE_nodewatcher-agent-mod-routing_olsr=m
+          EOF
+          make defconfig
+
+      - name: Build packages
+        run: |
+          cd sdk
+          make package/nodewatcher-agent/compile V=s -j$(nproc) || make package/nodewatcher-agent/compile V=s -j1
+
+      - name: Collect packages
+        run: |
+          mkdir -p packages
+          find sdk/bin -name "nodewatcher*.ipk" -exec cp {} packages/ \;
+          ls -la packages/
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: nodewatcher-agent-packages-${{ env.TARGET }}-${{ env.SUBTARGET }}
+          path: packages/*.ipk
+          retention-days: 30
+
+      - name: Create Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v1
+        with:
+          files: packages/*.ipk
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
