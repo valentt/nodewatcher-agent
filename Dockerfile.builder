@@ -71,7 +71,27 @@ RUN make package/feeds/base/libubox/compile V=s -j$(nproc) || make package/feeds
 RUN make package/feeds/base/ubus/compile V=s -j$(nproc) || make package/feeds/base/ubus/compile V=s -j1
 RUN make package/feeds/base/uci/compile V=s -j$(nproc) || make package/feeds/base/uci/compile V=s -j1
 RUN make package/feeds/base/libjson-c/compile V=s -j$(nproc) || make package/feeds/base/libjson-c/compile V=s -j1
-RUN make package/feeds/base/libiwinfo/compile V=s -j$(nproc) || make package/feeds/base/libiwinfo/compile V=s -j1
+
+# Download pre-built libiwinfo packages and extract to staging_dir
+# libiwinfo requires kernel headers to compile, so we use pre-built packages instead
+RUN ARCH="mips_24kc" && \
+    PKG_URL="https://downloads.openwrt.org/releases/${OPENWRT_VERSION}/packages/${ARCH}/base" && \
+    mkdir -p /tmp/iwinfo && cd /tmp/iwinfo && \
+    wget -q "${PKG_URL}/libiwinfo20230701_2024.10.20~b94f066e-r1_mips_24kc.ipk" -O libiwinfo.ipk && \
+    ar x libiwinfo.ipk && \
+    tar xzf data.tar.gz 2>/dev/null || tar xf data.tar.zst --use-compress-program=unzstd && \
+    STAGING=$(ls -d /home/builder/sdk/staging_dir/target-* | head -1) && \
+    cp -av usr/lib/libiwinfo.so* ${STAGING}/usr/lib/ && \
+    cd /home/builder/sdk && rm -rf /tmp/iwinfo
+
+# Download libiwinfo header from source repository
+RUN STAGING=$(ls -d staging_dir/target-* | head -1) && \
+    mkdir -p ${STAGING}/usr/include/iwinfo && \
+    wget -q "https://raw.githubusercontent.com/openwrt/iwinfo/b94f066e3f5839b8509483cdd8f4f582a45fa233/include/iwinfo.h" \
+         -O ${STAGING}/usr/include/iwinfo.h && \
+    wget -q "https://raw.githubusercontent.com/openwrt/iwinfo/b94f066e3f5839b8509483cdd8f4f582a45fa233/include/iwinfo/utils.h" \
+         -O ${STAGING}/usr/include/iwinfo/utils.h && \
+    echo "=== iwinfo headers installed ===" && ls -la ${STAGING}/usr/include/iwinfo*
 
 # Verify staging_dir has what we need
 RUN echo "=== Staging dir libs ===" && \
