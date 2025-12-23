@@ -155,13 +155,14 @@ jobs:
 
           # Download required packages
           echo "Downloading dependency packages..."
-          wget -q "${PKG_BASE}/libubox_2024-09-16-9e52171d-1_mips_24kc.ipk" -O tmp_pkgs/libubox.ipk
-          wget -q "${PKG_BASE}/libubus_2024-09-01-9913aa61-1_mips_24kc.ipk" -O tmp_pkgs/libubus.ipk
-          wget -q "${PKG_BASE}/libuci_2024-10-10-c8d13d65-1_mips_24kc.ipk" -O tmp_pkgs/libuci.ipk
-          wget -q "${PKG_BASE}/libjson-c5_0.18-1_mips_24kc.ipk" -O tmp_pkgs/libjson-c.ipk
-          wget -q "${PKG_BASE}/libblobmsg-json_2024-09-16-9e52171d-1_mips_24kc.ipk" -O tmp_pkgs/libblobmsg-json.ipk
-          wget -q "${TARGET_BASE}/libiwinfo_2024-10-20-c45bf3fc-1_mips_24kc.ipk" -O tmp_pkgs/libiwinfo.ipk
-          wget -q "${PKG_BASE}/libcurl4_8.10.1-1_mips_24kc.ipk" -O tmp_pkgs/libcurl.ipk
+          wget -q "${PKG_BASE}/libubox_2024-09-16-9e52171d-1_mips_24kc.ipk" -O tmp_pkgs/libubox.ipk || echo "Failed libubox"
+          wget -q "${PKG_BASE}/libubus_2024-09-01-9913aa61-1_mips_24kc.ipk" -O tmp_pkgs/libubus.ipk || echo "Failed libubus"
+          wget -q "${PKG_BASE}/libuci_2024-10-10-c8d13d65-1_mips_24kc.ipk" -O tmp_pkgs/libuci.ipk || echo "Failed libuci"
+          wget -q "${PKG_BASE}/libjson-c5_0.18-1_mips_24kc.ipk" -O tmp_pkgs/libjson-c.ipk || echo "Failed libjson-c"
+          wget -q "${PKG_BASE}/libblobmsg-json_2024-09-16-9e52171d-1_mips_24kc.ipk" -O tmp_pkgs/libblobmsg-json.ipk || echo "Failed libblobmsg-json"
+          wget -q "${TARGET_BASE}/libiwinfo_2024-10-20-c45bf3fc-1_mips_24kc.ipk" -O tmp_pkgs/libiwinfo.ipk || echo "Failed libiwinfo"
+          wget -q "${PKG_BASE}/libcurl4_8.10.1-1_mips_24kc.ipk" -O tmp_pkgs/libcurl.ipk || echo "Failed libcurl"
+          ls -la tmp_pkgs/
 
           # Extract and install packages using absolute paths
           echo "Extracting packages..."
@@ -192,9 +193,9 @@ jobs:
 
           # Download and install header packages
           echo "Downloading header packages..."
-          wget -q "${PKG_BASE}/libubox-dev_2024-09-16-9e52171d-1_mips_24kc.ipk" -O tmp_pkgs/libubox-dev.ipk
-          wget -q "${PKG_BASE}/libubus-dev_2024-09-01-9913aa61-1_mips_24kc.ipk" -O tmp_pkgs/libubus-dev.ipk
-          wget -q "${PKG_BASE}/libuci-dev_2024-10-10-c8d13d65-1_mips_24kc.ipk" -O tmp_pkgs/libuci-dev.ipk
+          wget -q "${PKG_BASE}/libubox-dev_2024-09-16-9e52171d-1_mips_24kc.ipk" -O tmp_pkgs/libubox-dev.ipk || echo "Failed libubox-dev"
+          wget -q "${PKG_BASE}/libubus-dev_2024-09-01-9913aa61-1_mips_24kc.ipk" -O tmp_pkgs/libubus-dev.ipk || echo "Failed libubus-dev"
+          wget -q "${PKG_BASE}/libuci-dev_2024-10-10-c8d13d65-1_mips_24kc.ipk" -O tmp_pkgs/libuci-dev.ipk || echo "Failed libuci-dev"
 
           for pkg in tmp_pkgs/*-dev.ipk; do
             if [ -f "$pkg" ]; then
