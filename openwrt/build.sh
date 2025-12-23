@@ -29,7 +29,6 @@ CONFIG_PACKAGE_nodewatcher-agent-mod-clients=m
 CONFIG_PACKAGE_nodewatcher-agent-mod-routing_babel=m
 CONFIG_PACKAGE_nodewatcher-agent-mod-routing_olsr=m
 CONFIG_PACKAGE_nodewatcher-agent-mod-meshpoint=m
-CONFIG_PACKAGE_nodewatcher-agent-mod-http_push=m
 CONFIGEOF
 
 make defconfig

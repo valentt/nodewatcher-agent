@@ -95,27 +95,10 @@ RUN STAGING=$(ls -d staging_dir/target-* | head -1) && \
          -O ${STAGING}/usr/include/iwinfo/utils.h && \
     echo "=== iwinfo headers installed ===" && ls -la ${STAGING}/usr/include/iwinfo*
 
-# Download pre-built libcurl package and extract to staging_dir
-RUN ARCH="mips_24kc" && \
-    PKG_URL="https://downloads.openwrt.org/releases/${OPENWRT_VERSION}/packages/${ARCH}/packages" && \
-    mkdir -p /tmp/curl && cd /tmp/curl && \
-    wget -q "${PKG_URL}/libcurl4_8.12.1-r1_mips_24kc.ipk" -O libcurl.ipk && \
-    tar xzf libcurl.ipk && \
-    tar xzf data.tar.gz && \
-    STAGING=$(ls -d /home/builder/sdk/staging_dir/target-* | head -1) && \
-    cp -av usr/lib/libcurl.so* ${STAGING}/usr/lib/ && \
-    ln -sf libcurl.so.4 ${STAGING}/usr/lib/libcurl.so && \
-    cd /home/builder/sdk && rm -rf /tmp/curl
-
-# Download curl headers from curl GitHub repository
-RUN STAGING=$(ls -d staging_dir/target-* | head -1) && \
-    mkdir -p ${STAGING}/usr/include/curl && \
-    CURL_VER="8.12.1" && \
-    for header in curl.h curlver.h easy.h multi.h system.h typecheck-gcc.h urlapi.h options.h header.h websockets.h mprintf.h stdcheaders.h; do \
-      wget -q "https://raw.githubusercontent.com/curl/curl/curl-8_12_1/include/curl/${header}" \
-           -O ${STAGING}/usr/include/curl/${header} 2>/dev/null || true; \
-    done && \
-    echo "=== curl headers installed ===" && ls -la ${STAGING}/usr/include/curl/
+# Note: http_push module requires libcurl which has ABI compatibility issues with SDK.
+# Pre-built libcurl from OpenWrt packages doesn't link correctly with SDK toolchain.
+# Would need to compile libcurl from source using feeds system (complex setup).
+# Keeping http_push disabled for now - use the HTTP push via external script instead.
 
 # Verify staging_dir has what we need
 RUN echo "=== Staging dir libs ===" && \
