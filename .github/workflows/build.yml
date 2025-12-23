@@ -37,6 +37,8 @@ jobs:
 
       - name: Build packages in container
         run: |
+          mkdir -p packages
+          chmod 777 packages
           docker run --rm -v ${{ github.workspace }}:/src nodewatcher-sdk:latest /bin/bash /src/openwrt/build.sh /src
 
       - name: List built packages
