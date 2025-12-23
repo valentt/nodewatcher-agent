@@ -159,8 +159,16 @@ endif()
 
 # HTTP push module
 if(HTTP_PUSH_MODULE)
-  find_path(curl_include_dir curl.h PATH_SUFFIXES curl)
-  include_directories(${curl_include_dir})
+  find_path(curl_include_dir curl.h
+    PATH_SUFFIXES curl
+    HINTS
+      ${CMAKE_FIND_ROOT_PATH}/usr/include
+      ${STAGING_DIR}/usr/include
+      /usr/include
+  )
+  if(curl_include_dir)
+    include_directories(${curl_include_dir})
+  endif()
   find_library(curl_library NAMES curl)
 
   set(MODULES ${MODULES} http_push_module)
