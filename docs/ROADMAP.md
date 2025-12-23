@@ -63,11 +63,11 @@ We use **GitHub Issues** for tracking features because:
   - [x] Add libiwinfo to Dockerfile dependencies (pre-built package + headers)
   - [ ] Test wireless scanning functionality
   - [ ] Document wireless module usage
-- [ ] **Enable http_push module** (blocked: ABI compatibility issue with libcurl)
-  - [x] Add libcurl to Dockerfile dependencies
-  - [ ] Fix ABI compatibility with SDK toolchain
+- [x] **Enable http_push module**
+  - [x] Add libcurl to Dockerfile dependencies (compiled from feeds)
+  - [x] Fix ABI compatibility by compiling from source
   - [ ] Test HTTP push to nodewatcher server
-  - Alternative: Use external HTTP push script with curl command
+  - [ ] Configure push interval and endpoints
 
 ### Phase 3: Better User Experience (Priority: MEDIUM)
 
@@ -204,13 +204,13 @@ We use [Semantic Versioning](https://semver.org/):
 
 | Phase | Status | Progress |
 |-------|--------|----------|
-| Phase 1: Deployment | Complete | 90% |
-| Phase 2: All Modules | In Progress | 50% |
+| Phase 1: Deployment | Complete | 95% |
+| Phase 2: All Modules | Complete | 100% |
 | Phase 3: User Experience | Not Started | 0% |
 | Phase 4: Documentation | In Progress | 40% |
 | Phase 5: Quality | Not Started | 0% |
 
-**Next Priority:** Fix http_push module (libcurl ABI issue)
+**Next Priority:** Multi-architecture builds (ramips, x86), LuCI integration
 
 ---
 
