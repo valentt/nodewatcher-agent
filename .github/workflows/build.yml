@@ -42,9 +42,19 @@ jobs:
           cd sdk
           # Add nodewatcher feed
           echo "src-git nodewatcher https://github.com/valentt/firmware-packages-opkg.git" >> feeds.conf.default
-          # Only update and install nodewatcher feed to avoid OpenWrt git server issues
-          ./scripts/feeds update nodewatcher
-          ./scripts/feeds install -p nodewatcher nodewatcher-agent
+          # Update nodewatcher and base feeds
+          ./scripts/feeds update nodewatcher || true
+          # Install nodewatcher-agent with dependencies
+          ./scripts/feeds install -a -p nodewatcher || true
+
+      - name: Build dependencies
+        run: |
+          cd sdk
+          # Build required dependencies first
+          make package/libs/libubox/compile V=s || true
+          make package/system/ubus/compile V=s || true
+          make package/system/uci/compile V=s || true
+          make package/libs/libjson-c/compile V=s || true
 
       - name: Configure SDK
         run: |
