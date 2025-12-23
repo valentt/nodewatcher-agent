@@ -20,149 +20,125 @@ jobs:
     steps:
       - name: Checkout nodewatcher-agent
         uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build SDK Docker image
+        uses: docker/build-push-action@v5
         with:
-          path: nodewatcher-agent
+          context: .
+          file: ./Dockerfile.builder
+          push: false
+          load: true
+          tags: nodewatcher-sdk:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
-      - name: Install dependencies
+      - name: Build packages in container
         run: |
-          sudo apt-get update
-          sudo apt-get install -y build-essential gawk gettext git libncurses5-dev \
-            libssl-dev python3 rsync unzip wget xz-utils zlib1g-dev zstd
+          docker run --rm -v ${{ github.workspace }}:/src nodewatcher-sdk:latest /bin/bash -c '
+            set -e
+            cd /home/builder/sdk
 
-      - name: Download OpenWrt SDK
-        run: |
-          SDK_URL="https://downloads.openwrt.org/releases/${OPENWRT_VERSION}/targets/${TARGET}/${SUBTARGET}/openwrt-sdk-${OPENWRT_VERSION}-${TARGET}-${SUBTARGET}_gcc-13.3.0_musl.Linux-x86_64.tar.zst"
-          echo "Downloading SDK from: ${SDK_URL}"
-          wget -q "${SDK_URL}" -O sdk.tar.zst
-          tar --zstd -xf sdk.tar.zst
-          mv openwrt-sdk-* sdk
+            # Create package directory
+            mkdir -p package/nodewatcher-agent/src
+            cp -r /src/* package/nodewatcher-agent/src/
 
-      - name: Setup package from local source
-        run: |
-          cd sdk
+            # Create OpenWrt Makefile
+            cat > package/nodewatcher-agent/Makefile << '\''MAKEFILE_EOF'\''
+            include $(TOPDIR)/rules.mk
 
-          # Create package directory structure
-          mkdir -p package/nodewatcher-agent/src
+            PKG_NAME:=nodewatcher-agent
+            PKG_VERSION:=2024-12-23
+            PKG_RELEASE:=1
 
-          # Copy local source
-          cp -r ../nodewatcher-agent/* package/nodewatcher-agent/src/
+            PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
+            CMAKE_INSTALL:=1
+            PKG_BUILD_PARALLEL:=1
 
-          # Create OpenWrt package Makefile
-          cat > package/nodewatcher-agent/Makefile << 'MAKEFILE_EOF'
-          include $(TOPDIR)/rules.mk
+            include $(INCLUDE_DIR)/package.mk
+            include $(INCLUDE_DIR)/cmake.mk
 
-          PKG_NAME:=nodewatcher-agent
-          PKG_VERSION:=2024-12-23
-          PKG_RELEASE:=1
+            define Package/nodewatcher-agent/default
+              SECTION:=utils
+              CATEGORY:=Base system
+              TITLE:=Nodewatcher agent daemon
+              DEPENDS:=+libubus +libubox +libjson-c
+            endef
 
-          PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
-          CMAKE_INSTALL:=1
-          PKG_BUILD_PARALLEL:=1
-
-          include $(INCLUDE_DIR)/package.mk
-          include $(INCLUDE_DIR)/cmake.mk
-
-          define Package/nodewatcher-agent/default
-            SECTION:=utils
-            CATEGORY:=Base system
-            TITLE:=Nodewatcher agent daemon
-            DEPENDS:=+libubus +libubox +libjson-c
-          endef
-
-          define Package/nodewatcher-agent
-            $(Package/nodewatcher-agent/default)
-            DEPENDS+= +libuci +libblobmsg-json
-          endef
-
-          define Package/nodewatcher-agent/description
-            Nodewatcher agent daemon
-          endef
-
-          define Package/nodewatcher-agent/conffiles
-          /etc/config/nodewatcher
-          endef
-
-          define Build/Prepare
-          	mkdir -p $(PKG_BUILD_DIR)
-          	$(CP) $(CURDIR)/src/* $(PKG_BUILD_DIR)/
-          endef
-
-          define Package/nodewatcher-agent/install
-          	$(INSTALL_DIR) $(1)/usr/bin
-          	$(INSTALL_BIN) $(PKG_BUILD_DIR)/nodewatcher-agent $(1)/usr/bin/nodewatcher-agent
-          	$(INSTALL_DIR) $(1)/usr/lib
-          	$(INSTALL_BIN) $(PKG_BUILD_DIR)/libnodewatcher-agent-common.so $(1)/usr/lib/
-          	$(INSTALL_DIR) $(1)/etc/init.d
-          	$(INSTALL_DIR) $(1)/etc/config
-          	$(INSTALL_DIR) $(1)/www/nodewatcher
-          endef
-
-          # 1: module name
-          # 2: extra dependencies
-          # 3: module title/description
-          define BuildModule
-
-            define Package/nodewatcher-agent-mod-$(1)
+            define Package/nodewatcher-agent
               $(Package/nodewatcher-agent/default)
-              TITLE+= ($(1) module)
-              DEPENDS+=nodewatcher-agent $(2)
+              DEPENDS+= +libuci +libblobmsg-json
             endef
 
-            define Package/nodewatcher-agent-mod-$(1)/description
-              $(3)
+            define Package/nodewatcher-agent/description
+              Nodewatcher agent daemon
             endef
 
-            define Package/nodewatcher-agent-mod-$(1)/install
-          	$(INSTALL_DIR) $$(1)/usr/lib/nodewatcher-agent
-          	$(INSTALL_BIN) $(PKG_BUILD_DIR)/$(1).so $$(1)/usr/lib/nodewatcher-agent/
+            define Build/Prepare
+            	mkdir -p $(PKG_BUILD_DIR)
+            	$(CP) $(CURDIR)/src/* $(PKG_BUILD_DIR)/
             endef
 
-            $$(eval $$(call BuildPackage,nodewatcher-agent-mod-$(1)))
+            define Package/nodewatcher-agent/install
+            	$(INSTALL_DIR) $(1)/usr/bin
+            	$(INSTALL_BIN) $(PKG_BUILD_DIR)/nodewatcher-agent $(1)/usr/bin/nodewatcher-agent
+            	$(INSTALL_DIR) $(1)/usr/lib
+            	$(INSTALL_BIN) $(PKG_BUILD_DIR)/libnodewatcher-agent-common.so $(1)/usr/lib/
+            endef
 
-          endef
+            # Modules
+            define BuildModule
+              define Package/nodewatcher-agent-mod-$(1)
+                $(Package/nodewatcher-agent/default)
+                TITLE+= ($(1) module)
+                DEPENDS+=nodewatcher-agent $(2)
+              endef
+              define Package/nodewatcher-agent-mod-$(1)/install
+            	$(INSTALL_DIR) $$(1)/usr/lib/nodewatcher-agent
+            	$(INSTALL_BIN) $(PKG_BUILD_DIR)/$(1).so $$(1)/usr/lib/nodewatcher-agent/
+              endef
+              $$(eval $$(call BuildPackage,nodewatcher-agent-mod-$(1)))
+            endef
 
-          $(eval $(call BuildPackage,nodewatcher-agent))
-          $(eval $(call BuildModule,general,,Provides general system info.))
-          $(eval $(call BuildModule,resources,,Provides system resource usage info.))
-          $(eval $(call BuildModule,interfaces,+netifd,Provides network interface info.))
-          $(eval $(call BuildModule,wireless,+libiwinfo,Provides wireless interface info.))
-          $(eval $(call BuildModule,keys_ssh,,Provides SSH key info.))
-          $(eval $(call BuildModule,clients,,Provides client info.))
-          $(eval $(call BuildModule,http_push,+libcurl,Provides HTTP push support.))
-          $(eval $(call BuildModule,routing_babel,,Provides Babel routing info.))
-          $(eval $(call BuildModule,routing_olsr,,Provides OLSR routing info.))
-          MAKEFILE_EOF
+            $(eval $(call BuildPackage,nodewatcher-agent))
+            $(eval $(call BuildModule,general,))
+            $(eval $(call BuildModule,resources,))
+            $(eval $(call BuildModule,interfaces,))
+            $(eval $(call BuildModule,keys_ssh,))
+            $(eval $(call BuildModule,clients,))
+            $(eval $(call BuildModule,routing_babel,))
+            $(eval $(call BuildModule,routing_olsr,))
+            $(eval $(call BuildModule,meshpoint,))
+            MAKEFILE_EOF
 
-      - name: Configure SDK
+            # Configure
+            cat >> .config << EOF
+            CONFIG_SIGNED_PACKAGES=n
+            CONFIG_PACKAGE_nodewatcher-agent=m
+            CONFIG_PACKAGE_nodewatcher-agent-mod-general=m
+            CONFIG_PACKAGE_nodewatcher-agent-mod-resources=m
+            CONFIG_PACKAGE_nodewatcher-agent-mod-interfaces=m
+            CONFIG_PACKAGE_nodewatcher-agent-mod-keys_ssh=m
+            CONFIG_PACKAGE_nodewatcher-agent-mod-clients=m
+            CONFIG_PACKAGE_nodewatcher-agent-mod-routing_babel=m
+            CONFIG_PACKAGE_nodewatcher-agent-mod-routing_olsr=m
+            CONFIG_PACKAGE_nodewatcher-agent-mod-meshpoint=m
+            EOF
+            make defconfig
+
+            # Build
+            make package/nodewatcher-agent/compile V=s -j$(nproc) || make package/nodewatcher-agent/compile V=s -j1
+
+            # Copy results
+            mkdir -p /src/packages
+            find bin -name "nodewatcher*.ipk" -exec cp {} /src/packages/ \;
+            ls -la /src/packages/
+          '
+
+      - name: List built packages
         run: |
-          cd sdk
-          # Enable all nodewatcher packages
-          cat >> .config << 'EOF'
-          CONFIG_SIGNED_PACKAGES=n
-          CONFIG_PACKAGE_nodewatcher-agent=m
-          CONFIG_PACKAGE_nodewatcher-agent-mod-general=m
-          CONFIG_PACKAGE_nodewatcher-agent-mod-resources=m
-          CONFIG_PACKAGE_nodewatcher-agent-mod-interfaces=m
-          CONFIG_PACKAGE_nodewatcher-agent-mod-wireless=m
-          CONFIG_PACKAGE_nodewatcher-agent-mod-keys_ssh=m
-          CONFIG_PACKAGE_nodewatcher-agent-mod-clients=m
-          CONFIG_PACKAGE_nodewatcher-agent-mod-http_push=m
-          CONFIG_PACKAGE_nodewatcher-agent-mod-routing_babel=m
-          CONFIG_PACKAGE_nodewatcher-agent-mod-routing_olsr=m
-          EOF
-          make defconfig
-
-      - name: Build packages
-        run: |
-          cd sdk
-          # First build dependencies
-          make package/nodewatcher-agent/compile V=s -j$(nproc) 2>&1 || \
-          make package/nodewatcher-agent/compile V=s -j1 2>&1
-
-      - name: Collect packages
-        run: |
-          mkdir -p packages
-          find sdk/bin -name "nodewatcher*.ipk" -exec cp {} packages/ \; 2>/dev/null || true
           echo "=== Built packages ==="
           ls -la packages/ || echo "No packages found"
 
