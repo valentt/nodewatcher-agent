@@ -71,6 +71,7 @@ RUN make package/feeds/base/libubox/compile V=s -j$(nproc) || make package/feeds
 RUN make package/feeds/base/ubus/compile V=s -j$(nproc) || make package/feeds/base/ubus/compile V=s -j1
 RUN make package/feeds/base/uci/compile V=s -j$(nproc) || make package/feeds/base/uci/compile V=s -j1
 RUN make package/feeds/base/libjson-c/compile V=s -j$(nproc) || make package/feeds/base/libjson-c/compile V=s -j1
+RUN make package/feeds/base/libiwinfo/compile V=s -j$(nproc) || make package/feeds/base/libiwinfo/compile V=s -j1
 
 # Verify staging_dir has what we need
 RUN echo "=== Staging dir libs ===" && \

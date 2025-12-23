@@ -72,6 +72,7 @@ jobs:
             - `nodewatcher-agent-mod-general` - General system info
             - `nodewatcher-agent-mod-resources` - Resource usage monitoring
             - `nodewatcher-agent-mod-interfaces` - Network interface info
+            - `nodewatcher-agent-mod-wireless` - Wireless interface info
             - `nodewatcher-agent-mod-keys_ssh` - SSH key management
             - `nodewatcher-agent-mod-clients` - Connected clients info
             - `nodewatcher-agent-mod-routing_babel` - Babel routing info

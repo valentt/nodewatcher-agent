@@ -11,9 +11,8 @@ PKG_BUILD_PARALLEL:=1
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
 
-# Disable optional modules that need extra dependencies (curl, iwinfo)
+# Disable http_push module (needs libcurl)
 CMAKE_OPTIONS += -DHTTP_PUSH_MODULE=OFF
-CMAKE_OPTIONS += -DWIRELESS_MODULE=OFF
 
 define Package/nodewatcher-agent/default
   SECTION:=utils
@@ -62,6 +61,7 @@ $(eval $(call BuildPackage,nodewatcher-agent))
 $(eval $(call BuildModule,general,))
 $(eval $(call BuildModule,resources,))
 $(eval $(call BuildModule,interfaces,))
+$(eval $(call BuildModule,wireless,+libiwinfo))
 $(eval $(call BuildModule,keys_ssh,))
 $(eval $(call BuildModule,clients,))
 $(eval $(call BuildModule,routing_babel,))

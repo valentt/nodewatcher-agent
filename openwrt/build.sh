@@ -23,6 +23,7 @@ CONFIG_PACKAGE_nodewatcher-agent=m
 CONFIG_PACKAGE_nodewatcher-agent-mod-general=m
 CONFIG_PACKAGE_nodewatcher-agent-mod-resources=m
 CONFIG_PACKAGE_nodewatcher-agent-mod-interfaces=m
+CONFIG_PACKAGE_nodewatcher-agent-mod-wireless=m
 CONFIG_PACKAGE_nodewatcher-agent-mod-keys_ssh=m
 CONFIG_PACKAGE_nodewatcher-agent-mod-clients=m
 CONFIG_PACKAGE_nodewatcher-agent-mod-routing_babel=m
