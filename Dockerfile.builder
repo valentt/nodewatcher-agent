@@ -83,6 +83,7 @@ RUN ARCH="mips_24kc" && \
     tar xzf data.tar.gz && \
     STAGING=$(ls -d /home/builder/sdk/staging_dir/target-* | head -1) && \
     cp -av usr/lib/libiwinfo.so* ${STAGING}/usr/lib/ && \
+    ln -sf libiwinfo.so.20230701 ${STAGING}/usr/lib/libiwinfo.so && \
     cd /home/builder/sdk && rm -rf /tmp/iwinfo
 
 # Download libiwinfo header from source repository
@@ -103,6 +104,7 @@ RUN ARCH="mips_24kc" && \
     tar xzf data.tar.gz && \
     STAGING=$(ls -d /home/builder/sdk/staging_dir/target-* | head -1) && \
     cp -av usr/lib/libcurl.so* ${STAGING}/usr/lib/ && \
+    ln -sf libcurl.so.4 ${STAGING}/usr/lib/libcurl.so && \
     cd /home/builder/sdk && rm -rf /tmp/curl
 
 # Download curl headers from curl GitHub repository
