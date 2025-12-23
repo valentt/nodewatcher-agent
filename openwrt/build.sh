@@ -10,10 +10,10 @@ cd "$SDK_DIR"
 # Create package directory structure
 mkdir -p package/nodewatcher-agent/src
 
-# Copy source code
-cp -r "$SRC_DIR"/* package/nodewatcher-agent/src/
+# Copy source code (excluding openwrt directory to avoid nested package detection)
+rsync -a --exclude='openwrt' --exclude='.git' --exclude='.github' "$SRC_DIR"/ package/nodewatcher-agent/src/
 
-# Copy OpenWrt Makefile
+# Copy OpenWrt Makefile to package root
 cp "$SRC_DIR/openwrt/Makefile" package/nodewatcher-agent/Makefile
 
 # Configure packages
