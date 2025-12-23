@@ -66,10 +66,11 @@ EOF
 RUN make defconfig
 
 # Build base packages (this populates staging_dir with headers and libs)
-RUN make package/libubox/compile V=s -j$(nproc) || make package/libubox/compile V=s -j1
-RUN make package/libubus/compile V=s -j$(nproc) || make package/libubus/compile V=s -j1
-RUN make package/uci/compile V=s -j$(nproc) || make package/uci/compile V=s -j1
-RUN make package/libjson-c/compile V=s -j$(nproc) || make package/libjson-c/compile V=s -j1
+# Feeds install to package/feeds/base/<name>
+RUN make package/feeds/base/libubox/compile V=s -j$(nproc) || make package/feeds/base/libubox/compile V=s -j1
+RUN make package/feeds/base/ubus/compile V=s -j$(nproc) || make package/feeds/base/ubus/compile V=s -j1
+RUN make package/feeds/base/uci/compile V=s -j$(nproc) || make package/feeds/base/uci/compile V=s -j1
+RUN make package/feeds/base/libjson-c/compile V=s -j$(nproc) || make package/feeds/base/libjson-c/compile V=s -j1
 
 # Verify staging_dir has what we need
 RUN echo "=== Staging dir libs ===" && \
