@@ -40,9 +40,11 @@ jobs:
       - name: Setup feeds
         run: |
           cd sdk
+          # Add nodewatcher feed
           echo "src-git nodewatcher https://github.com/valentt/firmware-packages-opkg.git" >> feeds.conf.default
-          ./scripts/feeds update -a
-          ./scripts/feeds install -a
+          # Only update and install nodewatcher feed to avoid OpenWrt git server issues
+          ./scripts/feeds update nodewatcher
+          ./scripts/feeds install -p nodewatcher nodewatcher-agent
 
       - name: Configure SDK
         run: |
