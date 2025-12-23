@@ -11,6 +11,10 @@ PKG_BUILD_PARALLEL:=1
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
 
+# Disable optional modules that need extra dependencies (curl, iwinfo)
+CMAKE_OPTIONS += -DHTTP_PUSH_MODULE=OFF
+CMAKE_OPTIONS += -DWIRELESS_MODULE=OFF
+
 define Package/nodewatcher-agent/default
   SECTION:=utils
   CATEGORY:=Base system
